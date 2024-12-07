@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HAT Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background: #ffffff;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        input, button, select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #007BFF;
+            color: #fff;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result, .daily-rate-inputs {
+            margin-top: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>HAT Calculator</h2>
+        <p>選擇功能:</p>
+        <select id="projectSelector" onchange="selectProject()">
+            <option value="">請選擇...</option>
+            <option value="project1">項目一: Booking & Hotel Website</option>
+            <option value="project2">項目二: Agoda 計算器</option>
+            <option value="project3">項目三: Ctrip & Expedia 計算器</option>
+        </select>
+    </div>
+
+    <!-- 項目一 -->
+    <div id="project1" class="container hidden">
+        <h3>項目一: Booking & Hotel Website</h3>
+        <p>輸入總金額:</p>
+        <input type="number" id="totalAmount" placeholder="輸入總金額">
+        <button onclick="calculateProject1()">計算</button>
+        <div class="result" id="result1"></div>
+    </div>
+
+    <!-- 項目二 -->
+    <div id="project2" class="container hidden">
+        <h3>項目二: Agoda 計算器</h3>
+        <p>輸入日期:</p>
+        <input type="date" id="startDate2">
+        <p>輸入入住日數:</p>
+        <input type="number" id="stayDays2" placeholder="輸入入住日數" oninput="generateRateInputs('2')">
+        <div id="rateInputs2" class="daily-rate-inputs"></div>
+        <button onclick="calculateProject2()">計算</button>
+        <div class="result" id="result2"></div>
+    </div>
+
+    <!-- 項目三 -->
+    <div id="project3" class="container hidden">
+        <h3>項目三: Ctrip & Expedia 計算器</h3>
+        <p>輸入日期:</p>
+        <input type="date" id="startDate3">
+        <p>輸入入住日數:</p>
+        <input type="number" id="stayDays3" placeholder="輸入入住日數" oninput="generateRateInputs('3')">
+        <div id="rateInputs3" class="daily-rate-inputs"></div>
+        <button onclick="calculateProject3()">計算</button>
+        <div class="result" id="result3"></div>
+    </div>
+
+    <script>
+        function selectProject() {
+            // 隱藏所有項目
+            document.getElementById("project1").classList.add("hidden");
+            document.getElementById("project2").classList.add("hidden");
+            document.getElementById("project3").classList.add("hidden");
+
+            // 顯示選擇的項目
+            const selectedProject = document.getElementById("projectSelector").value;
+            if (selectedProject) {
+                document.getElementById(selectedProject).classList.remove("hidden");
+            }
+        }
+
+        function calculateProject1() {
+            const totalAmount = parseFloat(document.getElementById("totalAmount").value);
+            if (isNaN(totalAmount) || totalAmount <= 0) {
+                alert("請輸入有效的總金額!");
+                return;
+            }
+            const baseAmount = totalAmount / 1.13;
+            const serviceCharge = baseAmount * 0.10;
+            const governmentTax = baseAmount * 0.03;
+            document.getElementById("result1").innerHTML = `
+                <p>原價: ${baseAmount.toFixed(2)} 元</p>
+                <p>10% 服務費: ${serviceCharge.toFixed(2)} 元</p>
+                <p>3% 酒店政府稅: ${governmentTax.toFixed(2)} 元</p>
+            `;
+        }
+
+        function generateRateInputs(project) {
+            const stayDays = parseInt(document.getElementById(`stayDays${project}`).value);
+            const rateInputsDiv = document.getElementById(`rateInputs${project}`);
+            rateInputsDiv.innerHTML = "";
+            if (isNaN(stayDays) || stayDays <= 0) {
+                return;
+            }
+            for (let i = 1; i <= stayDays; i++) {
+                const label = document.createElement("label");
+                label.textContent = `Day ${i} 房租:`;
+                const input = document.createElement("input");
+                input.type = "number";
+                input.id = `rateDay${project}_${i}`;
+                input.placeholder = `輸入第 ${i} 天的房租金額`;
+                rateInputsDiv.appendChild(label);
+                rateInputsDiv.appendChild(input);
+            }
+        }
+
+        function calculateProject2() {
+            calculateProject('2', 0.85);
+        }
+
+        function calculateProject3() {
+            calculateProject('3', 0.82);
+        }
+
+        function calculateProject(project, commissionRate) {
+            const startDate = document.getElementById(`startDate${project}`).value;
+            const stayDays = parseInt(document.getElementById(`stayDays${project}`).value);
+            if (!startDate || isNaN(stayDays) || stayDays <= 0) {
+                alert("請輸入住日數及開始日期!");
+                return;
+            }
+
+            const startDateObj = new Date(startDate);
+            let adjustedRates = [];
+            let totalAdjustedRate = 0;
+            let resultsWithDates = "";
+
+            for (let i = 1; i <= stayDays; i++) {
+                const dailyRate = parseFloat(document.getElementById(`rateDay${project}_${i}`).value);
+                if (isNaN(dailyRate) || dailyRate <= 0) {
+                    alert(`請輸入第 ${i} 天的有效房租金額!`);
+                    return;
+                }
+                const adjustedRate = dailyRate / 1.1 / commissionRate;
+                adjustedRates.push(adjustedRate);
+                totalAdjustedRate += adjustedRate;
+
+                const currentDate = new Date(startDateObj);
+                currentDate.setDate(startDateObj.getDate() + (i - 1));
+                const dateString = currentDate.toISOString().split("T")[0];
+                resultsWithDates += `<p>${dateString}: ${adjustedRate.toFixed(2)} 元</p>`;
+            }
+
+            const totalRateRO = totalAdjustedRate * 1.1 * commissionRate;
+            const hatTax = totalAdjustedRate * 0.03;
+            const operaTotal = totalAdjustedRate;
+            const operaOutstandingStayTotal = totalAdjustedRate * 1.1 + hatTax;
+
+            const alertComment = `
+                <p>HAT HK$${hatTax.toFixed(2)} is already settled.</p>
+                <p>HAT HK$${hatTax.toFixed(2)} is required to be settled upon Check-In.</p>
+            `;
+
+            document.getElementById(`result${project}`).innerHTML = `
+                <p><strong>Input to Opera Before 10% Service Charge & OTA Commission:</strong></p>
+                ${resultsWithDates}
+                <p><strong>總計:</strong></p>
+                <p>Total Rate (RO): ${totalRateRO.toFixed(2)} 元</p>
+                <p>HAT 3% Tax: ${hatTax.toFixed(2)} 元</p>
+                <p>Opera Total: ${operaTotal.toFixed(2)} 元</p>
+                <p>Opera Outstanding Stay Total: ${operaOutstandingStayTotal.toFixed(2)} 元</p>
+                <p><strong>Alert / Comment Input in Opera:</strong></p>
+                ${alertComment}
+            `;
+        }
+    </script>
+</body>
+</html>
